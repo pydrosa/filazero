@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "install:all": "npm --prefix web install && npm --prefix functions install",
+    "dev:web": "npm --prefix web run dev",
+    "build:web": "npm --prefix web run build",
+    "emulators": "firebase emulators:start"
+  },
+  "devDependencies": {
+    "firebase-tools": "latest"
+  }
+}

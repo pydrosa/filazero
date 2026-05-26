@@ -1,0 +1,13 @@
+{
+  "name": "filazero-functions",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": { "node": "20" },
+  "scripts": { "deploy": "firebase deploy --only functions", "serve": "firebase emulators:start --only functions,firestore" },
+  "dependencies": {
+    "firebase-admin": "latest",
+    "firebase-functions": "latest",
+    "axios": "latest"
+  }
+}
