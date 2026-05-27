@@ -8,13 +8,15 @@ service cloud.firestore {
     }
 
     match /companies/{companyId} {
+      // Permite leitura apenas ao dono da empresa
       allow read: if signedIn() && resource.data.ownerUid == request.auth.uid;
-      // Subscription and sequencing fields are controlled only by Cloud Functions.
-      allow write: if false;
+      // Permite criação se o ownerUid do documento for o mesmo do usuário autenticado
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      // Update e delete seguem bloqueados
+      allow update, delete: if false;
     }
 
     match /orders/{orderId} {
-      // Internal orders may include customer identification and never become public.
       allow read: if isOwner(resource.data.companyId);
       allow write: if false;
     }
