@@ -6,6 +6,7 @@ MVP web/PWA para avisar clientes quando pedidos ficam prontos.
 
 - O estabelecimento cria uma conta e recebe 7 dias de teste.
 - O numero de cada pedido e criado automaticamente pelo backend.
+- O painel destaca ha quanto tempo cada pedido em aberto esta aguardando.
 - O cliente le o QR Code e ativa um aviso de pedido pronto.
 - O pedido publico nao expoe o nome do cliente.
 - A assinatura e liberada somente pelo webhook autenticado do Asaas.

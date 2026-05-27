@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Bell, Copy, CreditCard, LogOut, Plus, QrCode, Store } from 'lucide-react';
+import { Bell, Clock, Copy, CreditCard, LogOut, Plus, QrCode, Store } from 'lucide-react';
 import {
   auth,
   createCheckout,
@@ -34,6 +34,25 @@ const statusClass = (status) => ({
   [STATUS.CANCELADO]: 'cancelado'
 }[status] || 'preparo');
 const errorMessage = (error) => String(error?.message || 'Algo deu errado. Tente novamente.').replace(/^Firebase:\s*/i, '');
+const isOpenOrder = (order) => [STATUS.PREPARO, STATUS.PRONTO].includes(order.status);
+
+function elapsedTime(order, now) {
+  const createdAt = order.createdAt?.toMillis?.();
+  if (!isOpenOrder(order) || !createdAt) return null;
+  return Math.max(0, now - createdAt);
+}
+
+function elapsedLabel(milliseconds) {
+  const minutes = Math.floor(milliseconds / 60000);
+  if (minutes < 1) return 'Agora';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours < 24) return remainingMinutes ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return remainingHours ? `${days}d ${remainingHours}h` : `${days}d`;
+}
 
 function App() {
   const path = location.pathname;
@@ -154,8 +173,13 @@ function Dashboard({ company }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [busy, setBusy] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const active = isActive(company);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(intervalId);
+  }, []);
   useEffect(() => {
     const ordersQuery = query(collection(db, 'orders'), where('companyId', '==', company.id), orderBy('createdAt', 'desc'));
     return onSnapshot(ordersQuery, (snapshot) => {
@@ -249,11 +273,12 @@ function Dashboard({ company }) {
     <section className="card">
       <div className="between section-head"><h2>Pedidos</h2><p className="muted compact">{orders.length} registrados</p></div>
       {!orders.length ? <p className="muted empty">Nenhum pedido criado ainda.</p> : <table className="table">
-        <thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th><th>Acoes</th></tr></thead>
+        <thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th><th>Tempo aberto</th><th>Acoes</th></tr></thead>
         <tbody>{orders.map((order) => <tr key={order.id}>
           <td data-label="Pedido"><b>#{order.numeroPedido}</b></td>
           <td data-label="Cliente">{order.cliente}</td>
           <td data-label="Status"><span className={`pill ${statusClass(order.status)}`}>{statusLabel(order.status)}</span></td>
+          <td data-label="Tempo aberto"><OpenTime order={order} now={now} /></td>
           <td data-label="Acoes"><div className="row actions">
             {order.status === STATUS.PREPARO && <button className="btn success" onClick={() => changeStatus(order, STATUS.PRONTO)}>Marcar pronto</button>}
             {order.status === STATUS.PRONTO && <button className="btn secondary" onClick={() => changeStatus(order, STATUS.ENTREGUE)}>Entregue</button>}
@@ -268,6 +293,13 @@ function Dashboard({ company }) {
 
 function Stat({ title, value }) {
   return <div className="card stat"><p className="muted">{title}</p><h2>{value}</h2></div>;
+}
+
+function OpenTime({ order, now }) {
+  const elapsed = elapsedTime(order, now);
+  if (elapsed === null) return <span className="muted">-</span>;
+  const className = elapsed >= 30 * 60000 ? 'late' : elapsed >= 15 * 60000 ? 'waiting' : '';
+  return <span className={`open-time ${className}`}><Clock size={14} /> {elapsedLabel(elapsed)}</span>;
 }
 
 function CustomerPage({ orderId }) {

@@ -114,6 +114,21 @@ label {
 .pill.pronto { background: #dcfce7; color: #166534; }
 .pill.entregue { background: #e0e7ff; color: #3730a3; }
 .pill.cancelado { background: #fee2e2; color: #991b1b; }
+.open-time {
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 999px;
+  color: #374151;
+  display: inline-flex;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  gap: 5px;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+.open-time.waiting { background: #fef3c7; color: #92400e; }
+.open-time.late { background: #fee2e2; color: #991b1b; }
 .table { border-collapse: collapse; margin-top: 14px; width: 100%; }
 .table th, .table td { border-bottom: 1px solid #f3f4f6; padding: 13px 10px; text-align: left; }
 .table th { color: #6b7280; font-size: 12px; text-transform: uppercase; }
