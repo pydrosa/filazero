@@ -72,6 +72,20 @@ O site e as regras do Firestore podem ser publicados no plano gratuito, mas cada
 
 Notificacoes push ficam indisponiveis enquanto `VITE_FIREBASE_VAPID_KEY` estiver vazio. Para habilita-las, gere um novo par de chaves Web Push no Firebase, informe somente a chave publica no frontend e mantenha a chave privada fora do repositorio.
 
+### Demonstracao no plano gratuito
+
+Para testar cadastro e pedidos sem habilitar o plano Blaze:
+
+1. Ative Authentication por email/senha no Firebase Console.
+2. Defina `VITE_DEMO_MODE=true`, `VITE_BILLING_ENABLED=false` e compile o frontend.
+3. Implante somente Hosting e Firestore:
+
+```bash
+npx firebase deploy --only hosting,firestore
+```
+
+Nesse modo, o navegador autenticado cria a empresa e os pedidos diretamente no Firestore sob regras restritas ao proprietario. O cliente acompanha a pagina do pedido em tempo real. Cobranca e notificacao push automatica ficam desativadas ate a implantacao das Cloud Functions no plano Blaze.
+
 ## Teste local com emuladores
 
 Para testar cadastro, criacao e acompanhamento de pedidos sem acessar dados de producao:
@@ -95,7 +109,8 @@ O pagamento Asaas e a entrega real de notificacoes push exigem credenciais e con
 
 ## Seguranca implementada
 
-- O navegador nao grava empresas, pedidos, pagamentos ou status de assinatura diretamente.
+- No modo completo, o navegador nao grava empresas, pedidos, pagamentos ou status de assinatura diretamente.
+- No modo demonstracao gratuito, regras do Firestore permitem ao usuario autenticado gravar somente sua empresa de teste e seus pedidos, sem alterar assinatura ou pagamentos.
 - `createCompany`, `createOrder` e `updateOrderStatus` validam usuario e assinatura no backend.
 - `orders` e privado para o dono do estabelecimento; `publicOrders` contem apenas os dados necessarios para o cliente acompanhar o pedido.
 - O webhook exige `ASAAS_WEBHOOK_TOKEN` e so processa cobrancas que foram criadas pela aplicacao.

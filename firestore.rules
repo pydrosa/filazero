@@ -6,22 +6,71 @@ service cloud.firestore {
       return signedIn() && exists(/databases/$(database)/documents/companies/$(companyId))
         && get(/databases/$(database)/documents/companies/$(companyId)).data.ownerUid == request.auth.uid;
     }
+    function activeTrial(companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)).data.subscriptionStatus == 'TRIAL'
+        && get(/databases/$(database)/documents/companies/$(companyId)).data.trialEndsAt > request.time;
+    }
+    function validPublicOrder(orderId) {
+      let order = getAfter(/databases/$(database)/documents/orders/$(orderId)).data;
+      return request.resource.data.keys().hasOnly(['companyName', 'numeroPedido', 'status', 'createdAt', 'readyAt', 'deliveredAt'])
+        && request.resource.data.companyName == order.companyName
+        && request.resource.data.numeroPedido == order.numeroPedido
+        && request.resource.data.status == order.status
+        && request.resource.data.createdAt == order.createdAt
+        && request.resource.data.readyAt == order.readyAt
+        && request.resource.data.deliveredAt == order.deliveredAt;
+    }
 
     match /companies/{companyId} {
       allow read: if signedIn() && resource.data.ownerUid == request.auth.uid;
-      // Subscription and sequencing fields are controlled only by Cloud Functions.
-      allow write: if false;
+      // Demo mode permits one owner-owned trial company while billing remains server-controlled.
+      allow create: if signedIn() && companyId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['ownerUid', 'nome', 'cnpj', 'plan', 'subscriptionStatus', 'createdAt', 'trialEndsAt', 'subscriptionValidUntil', 'nextOrderNumber'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() > 0 && request.resource.data.nome.size() <= 120
+        && request.resource.data.cnpj is string && request.resource.data.cnpj.size() <= 14
+        && request.resource.data.plan == 'TRIAL'
+        && request.resource.data.subscriptionStatus == 'TRIAL'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.trialEndsAt > request.time
+        && request.resource.data.trialEndsAt <= request.time + duration.value(8, 'd')
+        && request.resource.data.subscriptionValidUntil == null
+        && request.resource.data.nextOrderNumber == 0;
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nextOrderNumber'])
+        && request.resource.data.nextOrderNumber == resource.data.nextOrderNumber + 1;
     }
 
     match /orders/{orderId} {
       // Internal orders may include customer identification and never become public.
       allow read: if isOwner(resource.data.companyId);
-      allow write: if false;
+      allow create: if isOwner(request.resource.data.companyId) && activeTrial(request.resource.data.companyId)
+        && request.resource.data.keys().hasOnly(['companyId', 'companyName', 'numeroPedido', 'cliente', 'status', 'createdAt', 'readyAt', 'deliveredAt'])
+        && request.resource.data.companyName == get(/databases/$(database)/documents/companies/$(request.resource.data.companyId)).data.nome
+        && request.resource.data.numeroPedido == getAfter(/databases/$(database)/documents/companies/$(request.resource.data.companyId)).data.nextOrderNumber
+        && request.resource.data.cliente is string && request.resource.data.cliente.size() <= 80
+        && request.resource.data.status == 'EM_PREPARO'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.readyAt == null && request.resource.data.deliveredAt == null;
+      allow update: if isOwner(resource.data.companyId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'readyAt', 'deliveredAt'])
+        && (
+          (resource.data.status == 'EM_PREPARO' && request.resource.data.status == 'PRONTO'
+            && request.resource.data.readyAt == request.time && request.resource.data.deliveredAt == null)
+          || (resource.data.status == 'PRONTO' && request.resource.data.status == 'ENTREGUE'
+            && request.resource.data.deliveredAt == request.time)
+          || (['EM_PREPARO', 'PRONTO'].hasAny([resource.data.status])
+            && request.resource.data.status == 'CANCELADO')
+        );
     }
 
     match /publicOrders/{orderId} {
       allow read: if true;
-      allow write: if false;
+      allow create, update: if signedIn()
+        && existsAfter(/databases/$(database)/documents/orders/$(orderId))
+        && isOwner(getAfter(/databases/$(database)/documents/orders/$(orderId)).data.companyId)
+        && validPublicOrder(orderId);
     }
 
     match /publicOrders/{orderId}/tokens/{tokenId} {

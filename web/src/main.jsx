@@ -7,6 +7,7 @@ import {
   createCheckout,
   createCompany,
   createOrder,
+  DEMO_MODE,
   db,
   listenForegroundMessages,
   requestPushToken,
@@ -23,7 +24,7 @@ import './styles.css';
 
 const STATUS = { PREPARO: 'EM_PREPARO', PRONTO: 'PRONTO', ENTREGUE: 'ENTREGUE', CANCELADO: 'CANCELADO' };
 const BILLING_ENABLED = import.meta.env.VITE_BILLING_ENABLED === 'true';
-const PUSH_ENABLED = Boolean(import.meta.env.VITE_FIREBASE_VAPID_KEY);
+const PUSH_ENABLED = !DEMO_MODE && Boolean(import.meta.env.VITE_FIREBASE_VAPID_KEY);
 const statusLabel = (status) => ({
   [STATUS.PREPARO]: 'Em preparo',
   [STATUS.PRONTO]: 'Pronto',
@@ -35,7 +36,15 @@ const statusClass = (status) => ({
   [STATUS.ENTREGUE]: 'entregue',
   [STATUS.CANCELADO]: 'cancelado'
 }[status] || 'preparo');
-const errorMessage = (error) => String(error?.message || 'Algo deu errado. Tente novamente.').replace(/^Firebase:\s*/i, '');
+function errorMessage(error) {
+  if (error?.code === 'auth/network-request-failed') {
+    return 'Nao foi possivel acessar o Firebase Authentication. Verifique sua conexao e ative o login por email/senha no projeto Firebase.';
+  }
+  if (error?.code === 'auth/operation-not-allowed') {
+    return 'Ative o login por email/senha no Firebase Authentication para criar contas.';
+  }
+  return String(error?.message || 'Algo deu errado. Tente novamente.').replace(/^Firebase:\s*/i, '');
+}
 const isOpenOrder = (order) => [STATUS.PREPARO, STATUS.PRONTO].includes(order.status);
 
 function elapsedTime(order, now) {
@@ -248,7 +257,7 @@ function Dashboard({ company }) {
   const orderUrl = (id) => `${location.origin}/p/${id}`;
   return <main className="container grid">
     <header className="between header">
-      <div><p className="eyebrow">Painel</p><h1 className="title">{company.nome}</h1><p className="muted">Pedidos e notificacoes em tempo real</p></div>
+      <div><p className="eyebrow">{DEMO_MODE ? 'Demonstracao gratuita' : 'Painel'}</p><h1 className="title">{company.nome}</h1><p className="muted">Pedidos e acompanhamento em tempo real</p></div>
       <div className="row">{BILLING_ENABLED && <button className="btn secondary" onClick={pay}><CreditCard size={18} /> Assinatura</button>}<button className="btn secondary" onClick={() => signOut(auth)}><LogOut size={18} /> Sair</button></div>
     </header>
     {!active && <div className="notice"><b>Periodo de teste encerrado.</b> {BILLING_ENABLED ? <>Regularize para criar novos pedidos. <button className="btn warn" onClick={pay}>Pagar agora</button></> : 'Ative a cobranca para continuar criando pedidos.'}</div>}
