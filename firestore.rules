@@ -22,7 +22,7 @@ service cloud.firestore {
     }
 
     match /companies/{companyId} {
-      allow read: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow read: if signedIn() && companyId == request.auth.uid;
       // Demo mode permits one owner-owned trial company while billing remains server-controlled.
       allow create: if signedIn() && companyId == request.auth.uid
         && request.resource.data.keys().hasOnly(['ownerUid', 'nome', 'cnpj', 'plan', 'subscriptionStatus', 'createdAt', 'trialEndsAt', 'subscriptionValidUntil', 'nextOrderNumber'])

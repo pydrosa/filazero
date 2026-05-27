@@ -19,7 +19,7 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from 'firebase/auth';
-import { collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import './styles.css';
 
 const STATUS = { PREPARO: 'EM_PREPARO', PRONTO: 'PRONTO', ENTREGUE: 'ENTREGUE', CANCELADO: 'CANCELADO' };
@@ -89,9 +89,8 @@ function MerchantApp() {
       setCompany(undefined);
       return undefined;
     }
-    const companiesQuery = query(collection(db, 'companies'), where('ownerUid', '==', user.uid), limit(1));
-    return onSnapshot(companiesQuery, (snapshot) => {
-      setCompany(snapshot.docs[0] ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } : null);
+    return onSnapshot(doc(db, 'companies', user.uid), (snapshot) => {
+      setCompany(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null);
     });
   }, [user]);
 
