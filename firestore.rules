@@ -9,18 +9,33 @@ service cloud.firestore {
 
     match /companies/{companyId} {
       allow read: if signedIn() && resource.data.ownerUid == request.auth.uid;
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      // Subscription and sequencing fields are controlled only by Cloud Functions.
+      allow write: if false;
     }
 
     match /orders/{orderId} {
-      allow read: if true;
-      allow create, update, delete: if isOwner(request.resource.data.companyId) || isOwner(resource.data.companyId);
+      // Internal orders may include customer identification and never become public.
+      allow read: if isOwner(resource.data.companyId);
+      allow write: if false;
     }
 
-    match /orders/{orderId}/tokens/{tokenId} {
-      allow create: if true;
-      allow read, update, delete: if false;
+    match /publicOrders/{orderId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /publicOrders/{orderId}/tokens/{tokenId} {
+      function validToken() {
+        return request.resource.data.keys().hasOnly(['token', 'createdAt', 'userAgent'])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0
+          && request.resource.data.token.size() <= 4096
+          && request.resource.data.userAgent is string
+          && request.resource.data.userAgent.size() <= 512;
+      }
+      allow create: if exists(/databases/$(database)/documents/publicOrders/$(orderId)) && validToken();
+      allow update: if validToken() && request.resource.data.token == resource.data.token;
+      allow read, delete: if false;
     }
 
     match /payments/{paymentId} {

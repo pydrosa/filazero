@@ -19,6 +19,9 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app, 'southamerica-east1');
 
 export const createCheckout = httpsCallable(functions, 'createCheckout');
+export const createCompany = httpsCallable(functions, 'createCompany');
+export const createOrder = httpsCallable(functions, 'createOrder');
+export const updateOrderStatus = httpsCallable(functions, 'updateOrderStatus');
 
 export async function requestPushToken() {
   const supported = await isSupported();

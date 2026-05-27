@@ -1,89 +1,81 @@
 # FilaZero MVP
 
-MVP web/PWA para notificação de pedidos concluídos.
+MVP web/PWA para avisar clientes quando pedidos ficam prontos.
 
-## O que vem pronto
+## Fluxo
 
-- Login/cadastro de estabelecimento
-- Cadastro individual de empresa
-- Criação de pedidos
-- Link e QR Code por pedido
-- Tela pública do cliente em `/p/:orderId`
-- Solicitação de permissão de notificação
-- Registro de token FCM por pedido
-- Cloud Function que dispara push quando o pedido muda para `PRONTO`
-- Cloud Function para gerar cobrança Asaas
-- Webhook Asaas para liberar/bloquear assinatura
+- O estabelecimento cria uma conta e recebe 7 dias de teste.
+- O numero de cada pedido e criado automaticamente pelo backend.
+- O cliente le o QR Code e ativa um aviso de pedido pronto.
+- O pedido publico nao expoe o nome do cliente.
+- A assinatura e liberada somente pelo webhook autenticado do Asaas.
 
 ## Stack
 
 - React + Vite
-- Firebase Auth
-- Firestore
-- Firebase Hosting
-- Cloud Functions Node 20
+- Firebase Auth, Firestore, Hosting e Cloud Functions Node 20
 - Firebase Cloud Messaging Web Push
-- Asaas para cobrança
+- Asaas para cobranca
 
-## Configuração rápida
+## Configuracao rapida
 
-1. Crie projeto no Firebase.
-2. Ative Auth com email/senha.
-3. Ative Firestore.
-4. Ative Cloud Messaging e gere uma Web Push certificate key / VAPID key.
-5. Copie `web/.env.example` para `web/.env` e preencha.
-6. Edite `web/public/firebase-messaging-sw.js` com a mesma configuração Firebase.
-7. Copie `.firebaserc.example` para `.firebaserc` e coloque seu project id.
-8. Instale:
+1. Crie um projeto Firebase e ative Authentication por email/senha, Firestore e Cloud Messaging.
+2. Gere uma Web Push certificate key / VAPID key.
+3. Copie `web/.env.example` para `web/.env` e preencha os valores Firebase.
+4. Configure os mesmos dados Firebase em `web/public/firebase-messaging-sw.js`.
+5. Copie `.firebaserc.example` para `.firebaserc` e informe o project id.
+6. Instale as dependencias:
 
 ```bash
+npm install
 npm run install:all
 ```
 
-9. Configure segredos das functions:
+7. Configure os segredos obrigatorios:
 
 ```bash
-firebase functions:secrets:set ASAAS_API_KEY
-firebase functions:secrets:set ASAAS_WEBHOOK_TOKEN
+npx firebase functions:secrets:set ASAAS_API_KEY
+npx firebase functions:secrets:set ASAAS_WEBHOOK_TOKEN
 ```
 
-Também é possível usar variáveis de ambiente em deploys próprios:
+8. No primeiro deploy, informe os parametros solicitados pelas Functions:
 
-```bash
+```text
+APP_BASE_URL=https://seu-projeto.web.app
 ASAAS_BASE_URL=https://sandbox.asaas.com/api/v3
-ASAAS_API_KEY=sua_chave_sandbox
-ASAAS_WEBHOOK_TOKEN=um_token_forte
 ```
 
-10. Deploy:
+`APP_BASE_URL` deve ser uma URL HTTPS publica, pois e usada no clique da notificacao push. Troque `ASAAS_BASE_URL` pela URL de producao apenas quando a conta Asaas estiver pronta.
+
+9. Faca o deploy:
 
 ```bash
 npm --prefix web run build
-firebase deploy
+npx firebase deploy
 ```
 
-## Como testar o fluxo
+## Seguranca implementada
 
-1. Acesse a URL do Hosting.
-2. Crie uma conta de estabelecimento.
-3. Cadastre nome e CNPJ.
-4. Clique em Assinatura para gerar pagamento teste no Asaas.
-5. Crie um pedido.
-6. Abra o link `/p/:orderId` em outro navegador/celular.
-7. Clique em receber notificação.
-8. No painel, marque o pedido como pronto.
-9. O cliente recebe a notificação.
+- O navegador nao grava empresas, pedidos, pagamentos ou status de assinatura diretamente.
+- `createCompany`, `createOrder` e `updateOrderStatus` validam usuario e assinatura no backend.
+- `orders` e privado para o dono do estabelecimento; `publicOrders` contem apenas os dados necessarios para o cliente acompanhar o pedido.
+- O webhook exige `ASAAS_WEBHOOK_TOKEN` e so processa cobrancas que foram criadas pela aplicacao.
+- A assinatura e o contador sequencial de pedidos so sao alterados pelo Admin SDK.
 
-## Observação importante sobre iPhone
+## Teste do fluxo
 
-Push Notification em PWA no iOS pode exigir que o usuário adicione o site à tela inicial. Em Android/Chrome o fluxo costuma ser mais direto.
+1. Acesse a URL do Hosting e crie uma conta.
+2. Cadastre o estabelecimento; o teste gratuito sera iniciado.
+3. Crie um pedido e abra o QR Code em outro navegador ou celular.
+4. Ative o aviso na pagina do cliente.
+5. No painel, marque o pedido como pronto.
+6. Confirme que a notificacao abre a URL publica correta.
+7. Teste uma cobranca Asaas e confirme que apenas o webhook atualiza a assinatura.
 
-## Modelo de pagamento
+## Atualizacao de uma versao anterior
 
-- O app cria uma cobrança Asaas vinculada ao `companyId` em `externalReference`.
-- O Asaas chama o webhook `asaasWebhook` quando o pagamento muda de status.
-- Se o status for `RECEIVED` ou `CONFIRMED`, a empresa fica `ACTIVE`.
-- Se ficar vencido/cancelado, a empresa fica `INACTIVE`.
-- O painel bloqueia criação de pedidos quando a assinatura está inativa.
+Esta versao troca o acompanhamento publico de `orders` para `publicOrders` para retirar dados pessoais da leitura publica. Pedidos criados depois do deploy ja usam a nova estrutura. Caso existam pedidos abertos antes do deploy, finalize-os antes da atualizacao ou publique uma migracao administrativa que copie somente `companyName`, `numeroPedido`, `status` e timestamps para `publicOrders`.
 
-Para produção, recomendo trocar cobrança avulsa por assinatura recorrente nativa no Asaas ou criar automaticamente a próxima cobrança mensal após confirmação.
+## Observacao sobre iPhone
+
+Push Notification em PWA no iOS pode exigir que o usuario adicione o site a tela inicial. Em Android/Chrome o fluxo costuma ser mais direto.

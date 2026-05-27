@@ -6,6 +6,6 @@
     "emulators": "firebase emulators:start"
   },
   "devDependencies": {
-    "firebase-tools": "latest"
+    "firebase-tools": "^15.18.0"
   }
 }
