@@ -16,7 +16,7 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || 'Pedido pronto';
   const options = {
     body: payload.notification?.body || 'Seu pedido está disponível para retirada.',
-    icon: '/icon-192.png',
+    icon: '/icon.svg',
     data: payload.data || {}
   };
   self.registration.showNotification(title, options);
