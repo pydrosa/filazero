@@ -2,7 +2,8 @@ node_modules/
 web/dist/
 web/.env
 functions/.env*
+functions/functions.yaml
 .firebase/
 .firebaserc
-firebase-debug.log
+*-debug.log
 *.local

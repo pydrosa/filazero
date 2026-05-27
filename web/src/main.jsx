@@ -98,8 +98,8 @@ function AuthPage() {
       <div className="row"><Store /><h1 className="title">FilaZero</h1></div>
       <p className="muted">Avise clientes quando o pedido estiver pronto, sem fila no balcao.</p>
       <form onSubmit={submit} className="grid">
-        <div><label>E-mail</label><input className="input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></div>
-        <div><label>Senha</label><input className="input" type="password" minLength="6" value={password} onChange={(event) => setPassword(event.target.value)} required /></div>
+        <div><label htmlFor="auth-email">E-mail</label><input id="auth-email" className="input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></div>
+        <div><label htmlFor="auth-password">Senha</label><input id="auth-password" className="input" type="password" minLength="6" value={password} onChange={(event) => setPassword(event.target.value)} required /></div>
         {error && <p className="feedback error">{error}</p>}
         <button disabled={busy} className="btn">{busy ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta'}</button>
       </form>
@@ -134,8 +134,8 @@ function CompanyOnboarding() {
       <h1 className="title">Cadastre seu estabelecimento</h1>
       <p className="muted">Voce comeca com 7 dias de teste. O numero dos pedidos sera automatico.</p>
       <form onSubmit={save} className="grid">
-        <div><label>Nome do estabelecimento</label><input className="input" value={nome} onChange={(event) => setNome(event.target.value)} required /></div>
-        <div><label>CNPJ (opcional)</label><input className="input" value={cnpj} onChange={(event) => setCnpj(event.target.value)} inputMode="numeric" /></div>
+        <div><label htmlFor="company-name">Nome do estabelecimento</label><input id="company-name" className="input" value={nome} onChange={(event) => setNome(event.target.value)} required /></div>
+        <div><label htmlFor="company-cnpj">CNPJ (opcional)</label><input id="company-cnpj" className="input" value={cnpj} onChange={(event) => setCnpj(event.target.value)} inputMode="numeric" /></div>
         {error && <p className="feedback error">{error}</p>}
         <button disabled={busy} className="btn">{busy ? 'Criando...' : 'Comecar teste gratis'}</button>
       </form>
@@ -233,7 +233,7 @@ function Dashboard({ company }) {
         <h2><Plus size={18} /> Novo pedido</h2>
         <p className="muted compact">O numero e gerado automaticamente.</p>
         <form onSubmit={newOrder} className="grid">
-          <div><label>Nome ou apelido do cliente (opcional)</label><input className="input" value={cliente} onChange={(event) => setCliente(event.target.value)} placeholder="Ex.: Jose" /></div>
+          <div><label htmlFor="customer-name">Nome ou apelido do cliente (opcional)</label><input id="customer-name" className="input" value={cliente} onChange={(event) => setCliente(event.target.value)} placeholder="Ex.: Jose" /></div>
           <button disabled={!active || busy} className="btn">{busy ? 'Criando...' : 'Criar e gerar QR Code'}</button>
         </form>
       </div>

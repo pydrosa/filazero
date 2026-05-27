@@ -54,6 +54,27 @@ npm --prefix web run build
 npx firebase deploy
 ```
 
+## Teste local com emuladores
+
+Para testar cadastro, criacao e acompanhamento de pedidos sem acessar dados de producao:
+
+1. Copie `web/.env.example` para `web/.env` e defina `VITE_USE_FIREBASE_EMULATORS=true`.
+2. Em um terminal, inicie os servicos locais:
+
+```bash
+npx firebase emulators:start --project demo-filazero
+```
+
+3. Em outro terminal, inicie o frontend:
+
+```bash
+npm run dev:web
+```
+
+4. Abra `http://localhost:5173`, crie uma conta e teste o QR Code em outra aba.
+
+O pagamento Asaas e a entrega real de notificacoes push exigem credenciais e configuracao HTTPS reais; os demais fluxos podem ser verificados localmente.
+
 ## Seguranca implementada
 
 - O navegador nao grava empresas, pedidos, pagamentos ou status de assinatura diretamente.
