@@ -55,6 +55,23 @@ npm --prefix web run build
 npx firebase deploy
 ```
 
+### Primeiro deploy sem cobranca
+
+Para publicar a demonstracao antes de criar uma conta Asaas:
+
+1. Mantenha `VITE_BILLING_ENABLED=false` em `web/.env`.
+2. Compile o frontend normalmente.
+3. Ative o plano Blaze no Firebase, necessario para executar as Cloud Functions operacionais, mesmo sem pagamento no aplicativo.
+4. Implante somente o app, banco e as funcoes operacionais:
+
+```bash
+npx firebase deploy --only hosting,firestore,functions:createCompany,functions:createOrder,functions:updateOrderStatus,functions:notifyOrderReady
+```
+
+O site e as regras do Firestore podem ser publicados no plano gratuito, mas cadastro de estabelecimento e pedidos dependem das Functions. O estabelecimento funciona durante os 7 dias de teste gratuito apos a implantacao dessas funcoes. Quando a cobranca for ativada, configure `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN`, implante `createCheckout` e `asaasWebhook`, e altere `VITE_BILLING_ENABLED=true`.
+
+Notificacoes push ficam indisponiveis enquanto `VITE_FIREBASE_VAPID_KEY` estiver vazio. Para habilita-las, gere um novo par de chaves Web Push no Firebase, informe somente a chave publica no frontend e mantenha a chave privada fora do repositorio.
+
 ## Teste local com emuladores
 
 Para testar cadastro, criacao e acompanhamento de pedidos sem acessar dados de producao:

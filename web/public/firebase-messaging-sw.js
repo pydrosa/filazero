@@ -2,12 +2,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: 'SUBSTITUA_API_KEY',
-  authDomain: 'SUBSTITUA_AUTH_DOMAIN',
-  projectId: 'SUBSTITUA_PROJECT_ID',
-  storageBucket: 'SUBSTITUA_STORAGE_BUCKET',
-  messagingSenderId: 'SUBSTITUA_MESSAGING_SENDER_ID',
-  appId: 'SUBSTITUA_APP_ID'
+  apiKey: 'AIzaSyBEiUU61hM3hDVCNnuHkJwVKrKAxmLKf1E',
+  authDomain: 'filazero-1996.firebaseapp.com',
+  projectId: 'filazero-1996',
+  storageBucket: 'filazero-1996.firebasestorage.app',
+  messagingSenderId: '725795730741',
+  appId: '1:725795730741:web:fe61d28ce6ba2e62a7c87c'
 });
 
 const messaging = firebase.messaging();

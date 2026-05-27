@@ -22,6 +22,8 @@ import { collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, se
 import './styles.css';
 
 const STATUS = { PREPARO: 'EM_PREPARO', PRONTO: 'PRONTO', ENTREGUE: 'ENTREGUE', CANCELADO: 'CANCELADO' };
+const BILLING_ENABLED = import.meta.env.VITE_BILLING_ENABLED === 'true';
+const PUSH_ENABLED = Boolean(import.meta.env.VITE_FIREBASE_VAPID_KEY);
 const statusLabel = (status) => ({
   [STATUS.PREPARO]: 'Em preparo',
   [STATUS.PRONTO]: 'Pronto',
@@ -247,9 +249,9 @@ function Dashboard({ company }) {
   return <main className="container grid">
     <header className="between header">
       <div><p className="eyebrow">Painel</p><h1 className="title">{company.nome}</h1><p className="muted">Pedidos e notificacoes em tempo real</p></div>
-      <div className="row"><button className="btn secondary" onClick={pay}><CreditCard size={18} /> Assinatura</button><button className="btn secondary" onClick={() => signOut(auth)}><LogOut size={18} /> Sair</button></div>
+      <div className="row">{BILLING_ENABLED && <button className="btn secondary" onClick={pay}><CreditCard size={18} /> Assinatura</button>}<button className="btn secondary" onClick={() => signOut(auth)}><LogOut size={18} /> Sair</button></div>
     </header>
-    {!active && <div className="notice"><b>Assinatura inativa.</b> Regularize para criar novos pedidos. <button className="btn warn" onClick={pay}>Pagar agora</button></div>}
+    {!active && <div className="notice"><b>Periodo de teste encerrado.</b> {BILLING_ENABLED ? <>Regularize para criar novos pedidos. <button className="btn warn" onClick={pay}>Pagar agora</button></> : 'Ative a cobranca para continuar criando pedidos.'}</div>}
     {feedback && <p className="feedback" role="status">{feedback}</p>}
     <section className="grid grid-4"><Stat title="Em preparo" value={stats.preparo} /><Stat title="Prontos" value={stats.pronto} /><Stat title="Entregues" value={stats.entregue} /><Stat title="Total" value={stats.total} /></section>
     <section className="grid grid-2">
@@ -349,11 +351,11 @@ function CustomerPage({ orderId }) {
       <p className="eyebrow">{order.companyName}</p>
       <h1 className="title">Pedido #{order.numeroPedido}</h1>
       <div className={`big-status ${ready ? 'ready' : ''}`}>{ready ? 'Pedido pronto!' : 'Em preparo'}</div>
-      <p className="muted">{ready ? 'Retire no balcao.' : 'Ative o aviso e acompanhe sem ficar na fila.'}</p>
-      {!ready && !notificationEnabled && <button className="btn full" disabled={busy} onClick={enableNotifications}><Bell size={18} /> {busy ? 'Ativando...' : 'Avisar quando estiver pronto'}</button>}
+      <p className="muted">{ready ? 'Retire no balcao.' : PUSH_ENABLED ? 'Ative o aviso e acompanhe sem ficar na fila.' : 'Acompanhe esta tela para verificar quando estiver pronto.'}</p>
+      {PUSH_ENABLED && !ready && !notificationEnabled && <button className="btn full" disabled={busy} onClick={enableNotifications}><Bell size={18} /> {busy ? 'Ativando...' : 'Avisar quando estiver pronto'}</button>}
       {notificationEnabled && !ready && <p className="enabled"><Bell size={18} /> Aviso ativado</p>}
       {message && <p className="feedback" role="status">{message}</p>}
-      {!ready && <p className="hint">No iPhone, adicione o app a tela inicial para permitir notificacoes.</p>}
+      {PUSH_ENABLED && !ready && <p className="hint">No iPhone, adicione o app a tela inicial para permitir notificacoes.</p>}
     </section>
   </main>;
 }
